@@ -82,15 +82,17 @@ public static unsafe class HotbarWriter
         var slot = module->GetSlotById(bar, slotId);
         if (slot == null) return Method.None;
 
-        module->SetAndSaveSlot(bar, slotId, type, id);
-        if (Matches(slot, type, id)) return Method.SetAndSaveSlot;
-
+        // Verified in game (2026-09-29): the slot's own Set plus WriteSavedSlot is what works on cross
+        // hotbars. The module-level SetAndSaveSlot is a no-op for ids 10+, so it is not tried first.
         slot->Set(type, id);
         if (Matches(slot, type, id))
         {
             module->WriteSavedSlot(job, bar, slotId, slot, false, false);
             return Method.SlotSet;
         }
+
+        module->SetAndSaveSlot(bar, slotId, type, id);
+        if (Matches(slot, type, id)) return Method.SetAndSaveSlot;
 
         slot->CommandType = type;
         slot->CommandId = id;
