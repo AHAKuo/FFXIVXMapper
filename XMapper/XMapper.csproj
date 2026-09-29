@@ -1,17 +1,17 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
   <PropertyGroup>
-    <Version>0.1.2.0</Version>
+    <Version>0.1.3.0</Version>
     <Author>ahadev</Author>
     <Name>XMapper</Name>
     <Punchline>Fill your cross hotbars for any job in one click, following a layout bias you choose.</Punchline>
     <Description>XMapper maps the current class's actions onto Cross Hotbar sets according to a "bias": a preset that says which kind of action lands on which pad.
 
-• Single-target attacks on the right face buttons, AoE on the left, abilities on the d-pads.
-• Role actions on set 2's right half, rare long-cooldown actions on set 2's left half.
-• Overflow continues onto later sets with the same layout.
-• Works for combat jobs, crafters and gatherers. Ships with editable biases; make your own.
-• Preview the whole layout before writing a single slot.</Description>
+â€¢ Single-target attacks on the right face buttons, AoE on the left, abilities on the d-pads.
+â€¢ Role actions on set 2's right half, rare long-cooldown actions on set 2's left half.
+â€¢ Overflow continues onto later sets with the same layout.
+â€¢ Works for combat jobs, crafters and gatherers. Ships with editable biases; make your own.
+â€¢ Preview the whole layout before writing a single slot.</Description>
     <Tags>hotbar;cross hotbar;xhb;controller;gamepad;actions;layout;preset;qol;quality-of-life;crafting;gathering</Tags>
     <RepoUrl>https://github.com/AHAKuo/FFXIVXMapper</RepoUrl>
     <IconUrl>https://raw.githubusercontent.com/AHAKuo/FFXIVXMapper/main/images/icon.png</IconUrl>

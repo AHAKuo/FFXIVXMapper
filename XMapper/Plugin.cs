@@ -160,6 +160,26 @@ public sealed class Plugin : IDalamudPlugin
                 ApplyPlan(plan);
                 break;
             }
+            case "probe":
+            {
+                // /xmapper probe <set> <slot> <actionId>
+                var a = parts.Length > 1 ? parts[1].Split(' ', StringSplitOptions.RemoveEmptyEntries) : [];
+                if (a.Length != 3 || !int.TryParse(a[0], out var set) || !int.TryParse(a[1], out var slot) || !uint.TryParse(a[2], out var actionId))
+                {
+                    ChatGui.PrintError("XMapper: usage /xmapper probe <set 1-8> <slot 0-15> <actionId>");
+                    return;
+                }
+
+                var job = ActionCatalog.CurrentJob();
+                if (job == null) { ChatGui.PrintError("XMapper: not logged in."); return; }
+
+                foreach (var line in HotbarWriter.Probe(job.RowId, set, slot, actionId))
+                {
+                    Log.Information(line);
+                    ChatGui.Print(line, "XMapper");
+                }
+                break;
+            }
             case "dump":
             {
                 var sets = parts.Length > 1 && int.TryParse(parts[1], out var n) ? [n] : new[] { 1, 2 };
