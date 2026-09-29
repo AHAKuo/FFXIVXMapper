@@ -71,7 +71,7 @@ public class Bias
     public int RareThresholdSeconds { get; set; } = 90;
 
     /// <summary>Highest cross hotbar set this bias may write to. Regions on later sets are ignored.</summary>
-    public int MaxSet { get; set; } = 4;
+    public int MaxSet { get; set; } = 2;
 
     /// <summary>Empty every slot of every region this bias owns before writing.</summary>
     public bool ClearOwnedRegions { get; set; } = true;
@@ -161,7 +161,7 @@ public class Bias
             Name = mirrored ? "AHA Mirrored" : "AHA",
             BuiltIn = true,
             RareThresholdSeconds = 90,
-            MaxSet = 4,
+            MaxSet = 2,
             Rules =
             [
                 new BucketRule { Bucket = Bucket.SingleTarget, Regions = Alternating(1, right, Cluster.Buttons) },
@@ -177,7 +177,7 @@ public class Bias
     {
         Name = "Crafting",
         BuiltIn = true,
-        MaxSet = 4,
+        MaxSet = 2,
         Rules =
         [
             new BucketRule { Bucket = Bucket.Progress, Regions = Alternating(1, Half.R2, Cluster.Buttons) },
@@ -191,7 +191,7 @@ public class Bias
     {
         Name = "Gathering",
         BuiltIn = true,
-        MaxSet = 4,
+        MaxSet = 2,
         Rules =
         [
             new BucketRule { Bucket = Bucket.Gather, Regions = AlternatingPair(1, (Half.R2, Cluster.Buttons), (Half.R2, Cluster.Dpad)) },

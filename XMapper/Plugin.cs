@@ -156,6 +156,19 @@ public sealed class Plugin : IDalamudPlugin
                 ApplyPlan(plan);
                 break;
             }
+            case "dump":
+            {
+                var sets = parts.Length > 1 && int.TryParse(parts[1], out var n) ? [n] : new[] { 1, 2 };
+                foreach (var set in sets)
+                {
+                    foreach (var line in HotbarWriter.Dump(set))
+                    {
+                        Log.Information(line);
+                        ChatGui.Print(line, "XMapper");
+                    }
+                }
+                break;
+            }
             default:
                 ToggleMainUi();
                 break;

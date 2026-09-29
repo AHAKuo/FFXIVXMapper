@@ -48,7 +48,35 @@ public static unsafe class HotbarWriter
             written++;
         }
 
+        // The cross hotbar display does not pick up slot writes on its own; reloading each set from
+        // the saved data (which SetAndSaveSlot just updated) refreshes it.
+        foreach (var set in plan.UsedSets())
+            module->LoadSavedHotbar(plan.Job.RowId, CrossHotbar.BarId(set));
+
         return new Result(cleared, written, null);
+    }
+
+    /// <summary>Live contents of a cross hotbar set, for the /xmapper dump diagnostic.</summary>
+    public static List<string> Dump(int set)
+    {
+        var lines = new List<string>();
+        var module = RaptureHotbarModule.Instance();
+        if (module == null)
+        {
+            lines.Add("Hotbar module is not available.");
+            return lines;
+        }
+
+        var bar = CrossHotbar.BarId(set);
+        lines.Add($"Set {set} (bar {bar}), shared: {module->IsHotbarShared(bar)}");
+        for (var slot = 0; slot < CrossHotbar.SlotsPerSet; slot++)
+        {
+            var s = module->GetSlotById(bar, (uint)slot);
+            if (s == null) { lines.Add($"  {slot}: <null>"); continue; }
+            var (half, cluster, i) = CrossHotbar.Decompose(slot);
+            lines.Add($"  {slot} {half} {cluster} {i}: {s->CommandType} #{s->CommandId}");
+        }
+        return lines;
     }
 
     /// <summary>What currently sits in a cross hotbar slot, for the preview's "kept" cells.</summary>
