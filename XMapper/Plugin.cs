@@ -117,8 +117,12 @@ public sealed class Plugin : IDalamudPlugin
         var msg = $"{plan.Job.Abbreviation}: placed {result.Written} of {plan.ActionCount} actions with bias \"{plan.Bias.Name}\""
                   + (plan.Unplaced.Count > 0 ? $", {plan.Unplaced.Count} did not fit." : ".");
         Log.Information(msg);
+        Log.Information("Verified {Verified}/{Written} live slots. {Diag}", result.Verified, result.Written, result.Diagnostics);
         if (Configuration.ChatSummary)
             ChatGui.Print(msg, "XMapper");
+
+        if (result.Verified < result.Written)
+            ChatGui.PrintError($"XMapper: only {result.Verified} of {result.Written} slots read back correctly ({result.Diagnostics}). Run /xmapper dump and report it.");
         return result;
     }
 

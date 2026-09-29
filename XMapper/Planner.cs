@@ -6,6 +6,9 @@ namespace XMapper;
 public sealed record Placement(int Set, int Slot, MappableAction Action)
 {
     public uint BarId => CrossHotbar.BarId(Set);
+
+    /// <summary>True when the action landed outside its bucket's regions because those were full.</summary>
+    public bool SpilledOver { get; init; }
 }
 
 public sealed class Plan
@@ -58,6 +61,46 @@ public static class Planner
             plan.Unplaced.AddRange(queue);
         }
 
+        if (bias.FillLeftoverSlots && plan.Unplaced.Count > 0)
+            SpillOver(plan, bias, taken);
+
         return plan;
+    }
+
+    /// <summary>
+    /// Second pass: anything that did not fit its own regions takes any free slot the bias owns,
+    /// lowest set first, so the allowed sets are used before an action is given up on.
+    /// </summary>
+    private static void SpillOver(Plan plan, Bias bias, HashSet<(int set, int slot)> taken)
+    {
+        var free = new List<(int set, int slot)>();
+        foreach (var region in bias.OwnedRegions().OrderBy(r => r.Set).ThenBy(r => r.Half).ThenBy(r => r.Cluster))
+        {
+            for (var i = 0; i < CrossHotbar.SlotsPerRegion; i++)
+            {
+                var slot = CrossHotbar.SlotIndex(region, i);
+                if (!taken.Contains((region.Set, slot)))
+                    free.Add((region.Set, slot));
+            }
+        }
+
+        var remaining = new List<MappableAction>();
+        var freeIndex = 0;
+        foreach (var action in plan.Unplaced)
+        {
+            if (freeIndex < free.Count)
+            {
+                var (set, slot) = free[freeIndex++];
+                taken.Add((set, slot));
+                plan.Placements.Add(new Placement(set, slot, action) { SpilledOver = true });
+            }
+            else
+            {
+                remaining.Add(action);
+            }
+        }
+
+        plan.Unplaced.Clear();
+        plan.Unplaced.AddRange(remaining);
     }
 }

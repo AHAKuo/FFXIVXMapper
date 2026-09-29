@@ -79,6 +79,9 @@ public class Bias
     /// <summary>Also empty the slots on the used sets that no region owns.</summary>
     public bool ClearWholeSets { get; set; } = false;
 
+    /// <summary>When a bucket's regions are full, put the leftovers in any free owned slot instead of dropping them.</summary>
+    public bool FillLeftoverSlots { get; set; } = true;
+
     public List<BucketRule> Rules { get; set; } = [];
 
     public List<Region> RegionsFor(Bucket bucket) =>
@@ -119,6 +122,7 @@ public class Bias
             MaxSet = MaxSet,
             ClearOwnedRegions = ClearOwnedRegions,
             ClearWholeSets = ClearWholeSets,
+            FillLeftoverSlots = FillLeftoverSlots,
             Rules = Rules.Select(r => new BucketRule
             {
                 Bucket = r.Bucket,
