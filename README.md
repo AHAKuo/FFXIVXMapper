@@ -27,13 +27,31 @@ Switch to the class you want to map, open `/xmapper`, check the preview, hold **
 | Role actions | 2 | R2 | buttons, then d-pad | role actions |
 | Rare actions | 2 | L2 | buttons, then d-pad | anything with a recast of 90 s or more |
 
-When a region is full, the same region on set 3 continues it (set 3 mirrors set 1, set 4 mirrors set 2). Sets above the bias's **max set** (default 4) are never touched. Anything that does not fit is listed under the preview.
+Every region fills **clockwise starting from West**: the first (lowest-level) action of a bucket always lands on the left face button (PlayStation square, Xbox X) or d-pad left, the second on top, then right, then bottom. So on every job R2 + square is the combo opener and L2 + square is the first AoE. The start slot is a per-bias setting (**First slot** in the editor).
 
-**AHA Mirrored** swaps L2 and R2. **Crafting** puts progress actions on R2 buttons, quality on L2, buffs on the d-pads. **Gathering** puts gather/yield actions on R2, buffs on L2 buttons, utility on the d-pads.
+When a region is full, the same region on set 3 continues it (set 3 mirrors set 1, set 4 mirrors set 2). Sets above the bias's **max set** (default 2) are never touched. Anything that does not fit is listed under the preview.
+
+### Healers ("AHA Healer")
+
+Healer jobs (Conjurer, White Mage, Scholar, Astrologian, Sage) default to **AHA Healer**, which keeps the same idea but moves the attacks to the d-pads so the face buttons are free for heals:
+
+| Region | Set | Half | Cluster | Gets |
+|---|---|---|---|---|
+| Single-target attacks | 1 | R2 | d-pad | damage spells, first one on d-pad West |
+| AoE attacks | 1 | L2 | d-pad | AoE damage spells |
+| Single-target heals | 1 | R2 | face buttons | Cure, Regen, Raise and friends, first one on square |
+| AoE heals | 1 | L2 | face buttons | Medica, Succor, Helios and friends |
+| Abilities | 2 | R2 | buttons, then d-pad | off-GCD abilities |
+| Role actions | 2 | L2 | face buttons | role actions |
+| Rare actions | 2 | L2 | d-pad | anything with a recast of 90 s or more |
+
+A heal or support GCD is one that cannot target an enemy. Self-centred AoE damage such as Holy shares those target flags with Medica, so the action description decides: it talks about damage without a cure potency. Biases that have no heal regions (AHA itself) fold heals back into the attack buckets, so Clemency or Vercure simply follow the other single-target spells.
+
+**AHA Mirrored** and **AHA Healer Mirrored** swap L2 and R2. **Crafting** puts progress actions on R2 buttons, quality on L2, buffs on the d-pads. **Gathering** puts gather/yield actions on R2, buffs on L2 buttons, utility on the d-pads.
 
 ### Biases
 
-A bias is just a list of regions per bucket, in fill order, plus a rare threshold and a max set. Built-in biases are read-only. Duplicate one in the **Biases** section, then edit the copy. The chosen bias is remembered per job.
+A bias is just a list of regions per bucket, in fill order, plus a first slot, a rare threshold and a max set. Built-in biases are read-only. Duplicate one in the **Biases** section, then edit the copy. The chosen bias is remembered per job.
 
 By default only the regions a bias owns are emptied before writing. Turn on **Empty whole sets** if you want the used sets wiped completely.
 
@@ -50,6 +68,7 @@ By default only the regions a bias owns are emptied before writing. Turn on **Em
 - Eligible: player actions for the current class, not PvP, at or below your level, with their unlock quest done.
 - Weaponskills and spells are GCDs; abilities are off-GCD.
 - Single-target means cast type 1 with no effect range; everything else is AoE.
+- A GCD that cannot target a hostile is a heal/support spell; self-centred AoEs whose description deals damage without a cure potency stay attacks.
 - Role actions come from the game's role flag. Rare is decided by recast time, before anything else.
 - Only the highest eligible action in an upgrade chain is placed. The game swaps upgrades on the bar anyway.
 - Crafting actions come from the `CraftAction` sheet and are classified by name. Specialist actions are skipped unless enabled in Options.

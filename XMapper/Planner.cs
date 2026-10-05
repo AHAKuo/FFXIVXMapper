@@ -42,16 +42,20 @@ public static class Planner
         var plan = new Plan { Job = job, Bias = bias, ActionCount = actions.Count };
         var taken = new HashSet<(int set, int slot)>();
 
-        foreach (var group in actions.GroupBy(a => a.Bucket).OrderBy(g => g.Key))
+        // A bucket the bias has no regions for is folded into its fallback (heals join the attacks, etc.)
+        // before grouping, so the merged list is still sorted by level.
+        foreach (var group in actions.GroupBy(a => EffectiveBucket(bias, a.Bucket)).OrderBy(g => g.Key))
         {
             var regions = bias.RegionsFor(group.Key);
             var queue = new Queue<MappableAction>(group.OrderBy(a => a.Level).ThenBy(a => a.Id));
 
             foreach (var region in regions)
             {
+                // Fill clockwise from the bias's first slot, so the lowest-level action (the combo opener)
+                // always lands on the same button of every region.
                 for (var i = 0; i < CrossHotbar.SlotsPerRegion && queue.Count > 0; i++)
                 {
-                    var slot = CrossHotbar.SlotIndex(region, i);
+                    var slot = CrossHotbar.FillSlot(region, bias.FirstSlot, i);
                     if (!taken.Add((region.Set, slot))) continue; // region shared by two buckets; first come first served
                     plan.Placements.Add(new Placement(region.Set, slot, queue.Dequeue()));
                 }
@@ -67,6 +71,20 @@ public static class Planner
         return plan;
     }
 
+    /// <summary>The bucket whose regions an action will use: its own if the bias lists any, else the fallback chain.</summary>
+    public static Bucket EffectiveBucket(Bias bias, Bucket bucket)
+    {
+        var current = bucket;
+        for (var guard = 0; guard < 4; guard++)
+        {
+            if (bias.RegionsFor(current).Count > 0) return current;
+            var next = Bias.Fallback(current);
+            if (next == current) return current;
+            current = next;
+        }
+        return current;
+    }
+
     /// <summary>
     /// Second pass: anything that did not fit its own regions takes any free slot the bias owns,
     /// lowest set first, so the allowed sets are used before an action is given up on.
@@ -78,7 +96,7 @@ public static class Planner
         {
             for (var i = 0; i < CrossHotbar.SlotsPerRegion; i++)
             {
-                var slot = CrossHotbar.SlotIndex(region, i);
+                var slot = CrossHotbar.FillSlot(region, bias.FirstSlot, i);
                 if (!taken.Contains((region.Set, slot)))
                     free.Add((region.Set, slot));
             }

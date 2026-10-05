@@ -21,7 +21,7 @@ public sealed record MappableAction(
     int RecastSeconds,
     bool IsGcd);
 
-public sealed record JobInfo(uint RowId, string Abbreviation, string Name, int Level, JobKind Kind);
+public sealed record JobInfo(uint RowId, string Abbreviation, string Name, int Level, JobKind Kind, bool IsHealer = false);
 
 /// <summary>Collects and classifies every action the current class can put on a hotbar.</summary>
 public static class ActionCatalog
@@ -36,6 +36,9 @@ public static class ActionCatalog
     private const uint CategorySpell = 2;
     private const uint CategoryWeaponskill = 3;
     private const uint CategoryAbility = 4;
+
+    // ClassJob.Role: 1 tank, 2 melee, 3 ranged, 4 healer.
+    private const byte RoleHealer = 4;
 
     private static readonly Dictionary<(uint category, string job), bool> CategoryCache = new();
 
@@ -53,7 +56,8 @@ public static class ActionCatalog
             _ => JobKind.Combat,
         };
 
-        return new JobInfo(row.RowId, row.Abbreviation.ExtractText(), row.Name.ExtractText(), Plugin.PlayerState.Level, kind);
+        return new JobInfo(row.RowId, row.Abbreviation.ExtractText(), row.Name.ExtractText(), Plugin.PlayerState.Level, kind,
+            kind == JobKind.Combat && row.Role == RoleHealer);
     }
 
     public static List<MappableAction> Collect(JobInfo job, Bias bias, Configuration config)
@@ -90,6 +94,7 @@ public static class ActionCatalog
 
         var result = new List<MappableAction>();
         var manager = ActionManager.Instance();
+        var transient = Plugin.DataManager.GetExcelSheet<ActionTransient>();
 
         foreach (var (id, row) in eligible)
         {
@@ -102,7 +107,7 @@ public static class ActionCatalog
 
             var isGcd = row.ActionCategory.RowId != CategoryAbility;
             var recast = row.Recast100ms / 10;
-            var bucket = ClassifyCombat(row, isGcd, recast, bias.RareThresholdSeconds);
+            var bucket = ClassifyCombat(row, isGcd, recast, bias.RareThresholdSeconds, transient);
 
             result.Add(new MappableAction(id, row.Name.ExtractText(), row.Icon, row.ClassJobLevel, bucket,
                 RaptureHotbarModule.HotbarSlotType.Action, recast, isGcd));
@@ -111,12 +116,36 @@ public static class ActionCatalog
         return result.OrderBy(a => a.Level).ThenBy(a => a.Id).ToList();
     }
 
-    private static Bucket ClassifyCombat(Lumina.Excel.Sheets.Action row, bool isGcd, int recast, int rareThreshold)
+    private static Bucket ClassifyCombat(Lumina.Excel.Sheets.Action row, bool isGcd, int recast, int rareThreshold,
+        Lumina.Excel.ExcelSheet<ActionTransient>? transient)
     {
         if (row.IsRoleAction) return Bucket.Role;
         if (recast >= rareThreshold) return Bucket.Rare;
         if (!isGcd) return Bucket.Ability;
-        return row.CastType == 1 && row.EffectRange == 0 ? Bucket.SingleTarget : Bucket.Aoe;
+        var single = row.CastType == 1 && row.EffectRange == 0;
+        if (IsSupportGcd(row, transient)) return single ? Bucket.Heal : Bucket.AoeHeal;
+        return single ? Bucket.SingleTarget : Bucket.Aoe;
+    }
+
+    /// <summary>
+    /// A GCD that cannot be aimed at an enemy is a heal or support spell (Cure, Regen, Raise, Medica, Succor...).
+    /// Self-centred AoE damage (Holy, Art of War) carries the same target flags as an AoE heal, so the
+    /// description decides: it mentions damage without a cure potency.
+    /// </summary>
+    private static bool IsSupportGcd(Lumina.Excel.Sheets.Action row, Lumina.Excel.ExcelSheet<ActionTransient>? transient)
+    {
+        if (row.CanTargetHostile) return false;
+        if (!(row.CanTargetSelf || row.CanTargetParty || row.CanTargetAlly || row.CanTargetAlliance)) return false;
+
+        if (row.EffectRange > 0 && transient != null)
+        {
+            var description = transient.GetRowOrDefault(row.RowId)?.Description.ExtractText() ?? string.Empty;
+            var dealsDamage = description.Contains("damage", StringComparison.OrdinalIgnoreCase)
+                              && !description.Contains("Cure Potency", StringComparison.OrdinalIgnoreCase);
+            if (dealsDamage) return false;
+        }
+
+        return true;
     }
 
     private static unsafe bool IsUnlocked(Lumina.Excel.Sheets.Action row)

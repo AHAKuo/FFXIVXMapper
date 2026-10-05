@@ -83,7 +83,7 @@ public sealed class Plugin : IDalamudPlugin
         {
             JobKind.Crafter => Bias.Crafting(),
             JobKind.Gatherer => Bias.Gathering(),
-            _ => Bias.Aha(),
+            _ => job.IsHealer ? Bias.AhaHealer() : Bias.Aha(),
         };
     }
 

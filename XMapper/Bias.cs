@@ -18,6 +18,9 @@ public enum Bucket
     Gather,
     Utility,
     Other,
+    // Appended after the originals so saved biases keep their numeric values.
+    Heal,
+    AoeHeal,
 }
 
 public enum Half { L2, R2 }
@@ -82,6 +85,12 @@ public class Bias
     /// <summary>When a bucket's regions are full, put the leftovers in any free owned slot instead of dropping them.</summary>
     public bool FillLeftoverSlots { get; set; } = true;
 
+    /// <summary>
+    /// Which slot of a four-slot cluster the first (lowest level) action of a bucket goes on; the rest follow clockwise.
+    /// Left means West: square on PlayStation, X on Xbox, left on the d-pad.
+    /// </summary>
+    public Direction FirstSlot { get; set; } = Direction.Left;
+
     public List<BucketRule> Rules { get; set; } = [];
 
     public List<Region> RegionsFor(Bucket bucket) =>
@@ -123,6 +132,7 @@ public class Bias
             ClearOwnedRegions = ClearOwnedRegions,
             ClearWholeSets = ClearWholeSets,
             FillLeftoverSlots = FillLeftoverSlots,
+            FirstSlot = FirstSlot,
             Rules = Rules.Select(r => new BucketRule
             {
                 Bucket = r.Bucket,
@@ -133,7 +143,15 @@ public class Bias
 
     public bool IsForCrafting => Rules.Any(r => r.Bucket is Bucket.Progress or Bucket.Quality);
     public bool IsForGathering => Rules.Any(r => r.Bucket is Bucket.Gather);
-    public bool IsForCombat => Rules.Any(r => r.Bucket is Bucket.SingleTarget or Bucket.Aoe);
+    public bool IsForCombat => Rules.Any(r => r.Bucket is Bucket.SingleTarget or Bucket.Aoe or Bucket.Heal or Bucket.AoeHeal);
+
+    /// <summary>Where a bucket's actions go when the bias has no regions for it. Returns the same bucket when there is nowhere else.</summary>
+    public static Bucket Fallback(Bucket b) => b switch
+    {
+        Bucket.Heal => Bucket.SingleTarget,
+        Bucket.AoeHeal => Bucket.Aoe,
+        _ => b,
+    };
 
     // ------------------------------------------------------------------ built-ins
 
@@ -177,6 +195,34 @@ public class Bias
         };
     }
 
+    /// <summary>
+    /// AHA for healers: the damage GCDs move to the d-pads (single-target on R2, AoE on L2, first spell on West)
+    /// and the face buttons take the heals the same way (single-target heals on R2, AoE heals on L2).
+    /// Set 2 holds abilities on R2, role actions on L2 buttons and rare cooldowns on L2 d-pad.
+    /// </summary>
+    public static Bias AhaHealer(bool mirrored = false)
+    {
+        var right = mirrored ? Half.L2 : Half.R2;
+        var left = mirrored ? Half.R2 : Half.L2;
+        return new Bias
+        {
+            Name = mirrored ? "AHA Healer Mirrored" : "AHA Healer",
+            BuiltIn = true,
+            RareThresholdSeconds = 90,
+            MaxSet = 2,
+            Rules =
+            [
+                new BucketRule { Bucket = Bucket.SingleTarget, Regions = Alternating(1, right, Cluster.Dpad) },
+                new BucketRule { Bucket = Bucket.Aoe, Regions = Alternating(1, left, Cluster.Dpad) },
+                new BucketRule { Bucket = Bucket.Heal, Regions = Alternating(1, right, Cluster.Buttons) },
+                new BucketRule { Bucket = Bucket.AoeHeal, Regions = Alternating(1, left, Cluster.Buttons) },
+                new BucketRule { Bucket = Bucket.Ability, Regions = AlternatingPair(2, (right, Cluster.Buttons), (right, Cluster.Dpad)) },
+                new BucketRule { Bucket = Bucket.Role, Regions = Alternating(2, left, Cluster.Buttons) },
+                new BucketRule { Bucket = Bucket.Rare, Regions = Alternating(2, left, Cluster.Dpad) },
+            ],
+        };
+    }
+
     public static Bias Crafting() => new()
     {
         Name = "Crafting",
@@ -205,7 +251,7 @@ public class Bias
         ],
     };
 
-    public static List<Bias> BuiltIns() => [Aha(), Aha(mirrored: true), Crafting(), Gathering()];
+    public static List<Bias> BuiltIns() => [Aha(), Aha(mirrored: true), AhaHealer(), AhaHealer(mirrored: true), Crafting(), Gathering()];
 
     public static string BucketLabel(Bucket b) => b switch
     {
@@ -214,6 +260,8 @@ public class Bias
         Bucket.Ability => "Abilities (oGCD)",
         Bucket.Role => "Role actions",
         Bucket.Rare => "Rare (long cooldown)",
+        Bucket.Heal => "Single-target heals / support",
+        Bucket.AoeHeal => "AoE heals / support",
         Bucket.Progress => "Progress (synthesis)",
         Bucket.Quality => "Quality (touch)",
         Bucket.Buff => "Buffs / upkeep",

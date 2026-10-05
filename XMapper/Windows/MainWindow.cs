@@ -329,14 +329,22 @@ public class MainWindow : Window, IDisposable
         if (ImGui.Checkbox("Empty whole sets", ref clearAll)) { bias.ClearWholeSets = clearAll; changed = true; }
         Tooltip("Also wipes slots on the used sets that no region owns (items, mounts, macros you placed by hand).");
 
+        var first = (int)bias.FirstSlot;
+        var directionNames = Enum.GetValues<Direction>().Select(d => CrossHotbar.DirectionLabel(d, Config.PlayStationLabels)).ToArray();
+        ImGui.SetNextItemWidth(260);
+        if (ImGui.Combo("First slot", ref first, directionNames, directionNames.Length)) { bias.FirstSlot = (Direction)first; changed = true; }
+        Tooltip("The lowest-level action of each bucket (the combo opener) goes here on every region; the rest follow clockwise.");
+
         ImGui.Spacing();
         ImGui.TextColored(Muted, "Regions per bucket, in fill order. Overflow moves to the next region in the list.");
+        ImGui.TextColored(Muted, "Heal buckets without regions fall back to the attack buckets, so non-healer biases need not list them.");
 
         foreach (var bucket in Enum.GetValues<Bucket>())
         {
             var relevant = bucket switch
             {
-                Bucket.SingleTarget or Bucket.Aoe or Bucket.Ability or Bucket.Role or Bucket.Rare => bias.IsForCombat || !(bias.IsForCrafting || bias.IsForGathering),
+                Bucket.SingleTarget or Bucket.Aoe or Bucket.Ability or Bucket.Role or Bucket.Rare or Bucket.Heal or Bucket.AoeHeal
+                    => bias.IsForCombat || !(bias.IsForCrafting || bias.IsForGathering),
                 Bucket.Progress or Bucket.Quality => bias.IsForCrafting || !(bias.IsForCombat || bias.IsForGathering),
                 Bucket.Gather or Bucket.Utility => bias.IsForGathering || !(bias.IsForCombat || bias.IsForCrafting),
                 _ => true,
@@ -410,7 +418,8 @@ public class MainWindow : Window, IDisposable
         if (ImGui.Checkbox("Print a summary to chat after applying", ref chat)) { Config.ChatSummary = chat; Config.Save(); }
 
         ImGui.Spacing();
-        ImGui.TextColored(Muted, "Slot order assumed per set: L2 d-pad, L2 buttons, R2 d-pad, R2 buttons; d-pad up/right/down/left, buttons top/right/bottom/left.");
+        ImGui.TextColored(Muted, "Slot order per set: L2 d-pad, L2 buttons, R2 d-pad, R2 buttons; d-pad up/right/down/left, buttons top/right/bottom/left.");
+        ImGui.TextColored(Muted, "Healer jobs (ClassJob role 4) default to the AHA Healer bias: attacks on the d-pads, heals on the face buttons.");
     }
 
     private static void Tooltip(string text)

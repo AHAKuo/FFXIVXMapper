@@ -1,10 +1,12 @@
 namespace XMapper;
 
+/// <summary>Position within a four-slot cluster. Values match the slot index order: up/top = 0, right = 1, down/bottom = 2, left = 3.</summary>
+public enum Direction { Up = 0, Right = 1, Down = 2, Left = 3 }
+
 /// <summary>
 /// Slot arithmetic for cross hotbars. Hotbar ids 10..17 are cross hotbar sets 1..8; each has 16 slots:
 /// 0-3 L2 d-pad, 4-7 L2 face buttons, 8-11 R2 d-pad, 12-15 R2 face buttons.
-/// D-pad order: up, right, down, left. Face buttons: top, right, bottom, left.
-/// If this turns out to differ in game, only this file needs changing.
+/// D-pad order: up, right, down, left. Face buttons: top, right, bottom, left. Verified in game 2026-09-29.
 /// </summary>
 public static class CrossHotbar
 {
@@ -20,6 +22,15 @@ public static class CrossHotbar
 
     public static int SlotIndex(Region r, int i) => SlotIndex(r.Half, r.Cluster, i);
 
+    /// <summary>
+    /// The i-th position (0..3) within a cluster when filling clockwise from <paramref name="first"/>.
+    /// Starting at Left gives left, up, right, down: the first action lands on West (□ / X / d-pad left).
+    /// </summary>
+    public static int FillIndex(Direction first, int i) => ((int)first + i) % SlotsPerRegion;
+
+    /// <summary>Slot for the i-th action placed in a region, honouring the bias's fill start.</summary>
+    public static int FillSlot(Region r, Direction first, int i) => SlotIndex(r.Half, r.Cluster, FillIndex(first, i));
+
     public static (Half half, Cluster cluster, int index) Decompose(int slot)
     {
         var half = slot < 8 ? Half.L2 : Half.R2;
@@ -34,4 +45,11 @@ public static class CrossHotbar
 
     public static string SlotLabel(Cluster cluster, int i, bool playStation) =>
         cluster == Cluster.Dpad ? DpadLabels[i] : (playStation ? ButtonLabelsPlayStation[i] : ButtonLabelsXbox[i]);
+
+    /// <summary>Label for a fill-start choice, e.g. "West (□ / X / d-pad left)".</summary>
+    public static string DirectionLabel(Direction d, bool playStation)
+    {
+        var compass = d switch { Direction.Up => "North", Direction.Right => "East", Direction.Down => "South", _ => "West" };
+        return $"{compass} ({SlotLabel(Cluster.Buttons, (int)d, playStation)} / d-pad {DpadLabels[(int)d].ToLowerInvariant()})";
+    }
 }
