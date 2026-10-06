@@ -1,12 +1,13 @@
 namespace XMapper;
 
-/// <summary>Position within a four-slot cluster. Values match the slot index order: up/top = 0, right = 1, down/bottom = 2, left = 3.</summary>
-public enum Direction { Up = 0, Right = 1, Down = 2, Left = 3 }
+/// <summary>Position within a four-slot cluster. Values match the slot index order: left = 0, up/top = 1, right = 2, down/bottom = 3.</summary>
+public enum Direction { Left = 0, Up = 1, Right = 2, Down = 3 }
 
 /// <summary>
 /// Slot arithmetic for cross hotbars. Hotbar ids 10..17 are cross hotbar sets 1..8; each has 16 slots:
 /// 0-3 L2 d-pad, 4-7 L2 face buttons, 8-11 R2 d-pad, 12-15 R2 face buttons.
-/// D-pad order: up, right, down, left. Face buttons: top, right, bottom, left. Verified in game 2026-09-29.
+/// Within a group the order is left, up, right, down (d-pad) / left, top, right, bottom (face buttons), i.e. clockwise from West.
+/// Half/cluster order verified in game 2026-09-29; the within-group order verified with /xmapper probe on 2026-10-06.
 /// </summary>
 public static class CrossHotbar
 {
@@ -24,7 +25,7 @@ public static class CrossHotbar
 
     /// <summary>
     /// The i-th position (0..3) within a cluster when filling clockwise from <paramref name="first"/>.
-    /// Starting at Left gives left, up, right, down: the first action lands on West (□ / X / d-pad left).
+    /// Starting at Left gives left, up, right, down, which is also the game's own slot order, so the first action lands on West (□ / X / d-pad left).
     /// </summary>
     public static int FillIndex(Direction first, int i) => ((int)first + i) % SlotsPerRegion;
 
@@ -39,9 +40,9 @@ public static class CrossHotbar
         return (half, cluster, within % 4);
     }
 
-    public static readonly string[] DpadLabels = ["Up", "Right", "Down", "Left"];
-    public static readonly string[] ButtonLabelsXbox = ["Y", "B", "A", "X"];
-    public static readonly string[] ButtonLabelsPlayStation = ["△", "○", "✕", "□"];
+    public static readonly string[] DpadLabels = ["Left", "Up", "Right", "Down"];
+    public static readonly string[] ButtonLabelsXbox = ["X", "Y", "B", "A"];
+    public static readonly string[] ButtonLabelsPlayStation = ["□", "△", "○", "✕"];
 
     public static string SlotLabel(Cluster cluster, int i, bool playStation) =>
         cluster == Cluster.Dpad ? DpadLabels[i] : (playStation ? ButtonLabelsPlayStation[i] : ButtonLabelsXbox[i]);

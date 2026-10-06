@@ -27,7 +27,7 @@ Switch to the class you want to map, open `/xmapper`, check the preview, hold **
 | Role actions | 2 | R2 | buttons, then d-pad | role actions |
 | Rare actions | 2 | L2 | buttons, then d-pad | anything with a recast of 90 s or more |
 
-Every region fills **clockwise starting from West**: the first (lowest-level) action of a bucket always lands on the left face button (PlayStation square, Xbox X) or d-pad left, the second on top, then right, then bottom. So on every job R2 + square is the combo opener and L2 + square is the first AoE. The start slot is a per-bias setting (**First slot** in the editor).
+Every region fills **clockwise starting from West**, which is also the order the game stores the four slots of a group in: the first (lowest-level) action of a bucket always lands on the left face button (PlayStation square, Xbox X) or d-pad left, the second on top, then right, then bottom. So on every job R2 + square is the combo opener and L2 + square is the first AoE. The start slot is a per-bias setting (**First slot** in the editor).
 
 When a region is full, the same region on set 3 continues it (set 3 mirrors set 1, set 4 mirrors set 2). Sets above the bias's **max set** (default 2) are never touched. Anything that does not fit is listed under the preview.
 

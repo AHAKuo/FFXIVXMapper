@@ -418,7 +418,7 @@ public class MainWindow : Window, IDisposable
         if (ImGui.Checkbox("Print a summary to chat after applying", ref chat)) { Config.ChatSummary = chat; Config.Save(); }
 
         ImGui.Spacing();
-        ImGui.TextColored(Muted, "Slot order per set: L2 d-pad, L2 buttons, R2 d-pad, R2 buttons; d-pad up/right/down/left, buttons top/right/bottom/left.");
+        ImGui.TextColored(Muted, "Slot order per set: L2 d-pad, L2 buttons, R2 d-pad, R2 buttons; within a group left, up, right, down (verified in game).");
         ImGui.TextColored(Muted, "Healer jobs (ClassJob role 4) default to the AHA Healer bias: attacks on the d-pads, heals on the face buttons.");
     }
 
